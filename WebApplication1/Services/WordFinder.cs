@@ -5,7 +5,7 @@
         private readonly direction _dir;
         private readonly int _maxWords;
         private readonly bool _ignoreCase;
-        private readonly string? _txtFile;
+        private string? _txtFile;
         private List<string> _keyPhraseList;
         private List<string>? _listOfLines;
         private List<string>? _listOfLinesToCheck;
@@ -50,6 +50,7 @@
             {
                 tempKeyPhraseList.Add(profile.ToLower());
             }
+            _txtFile=_txtFile.ToLower();
             _listOfLinesToCheck = tempListOfLines;
             _keyPhraseList = tempKeyPhraseList;
         }
@@ -76,15 +77,17 @@
                 keyPhrase.Split(new char[] { ' ' }).ToList().Last();
             var lineNumber = FindLine(crucialWordInKeyPhrase, _listOfLinesToCheck);
             var wordsInALine = _listOfLinesToCheck[(int)lineNumber].Split(new char[] { ' ' }).ToList();
-            var originalWordsInALine = _listOfLines[(int)lineNumber].Split(new char[] { ' ' }).ToList();
+            //temporary index points to the curcial word in a list of words in a particular line of text
             var tmp_index = wordsInALine.IndexOf(crucialWordInKeyPhrase);
+            var originalWordsInALine = _listOfLines[(int)lineNumber].Split(new char[] { ' ' }).ToList();
+            //if the word temporary index points to is at the start or at the end of the line, index switches lines
             if (dir == direction.left && tmp_index == 0)
             {
                 lineNumber--;
                 originalWordsInALine = _listOfLines[(int)lineNumber].Split(new char[] { ' ' }).ToList();
                 tmp_index = originalWordsInALine.Count-1;
             }
-            else if (dir == direction.right && tmp_index == wordsInALine.Count - 1)
+            else if (dir == direction.right && tmp_index == originalWordsInALine.Count - 1)
             {
                 lineNumber++;
                 originalWordsInALine = _listOfLines[(int)lineNumber].Split(new char[] { ' ' }).ToList();
@@ -101,22 +104,20 @@
                         result + " " + originalWordsInALine[tmp_index+1];
                     tmp_index = dir == direction.left ? tmp_index - 1 : tmp_index + 1;
                 }
-                catch (Exception)
+                catch (ArgumentOutOfRangeException)
                 {
                     lineNumber = dir == direction.left ?
                             lineNumber - 1 :
                             lineNumber + 1;
                     if (lineNumber < 0 || lineNumber > _listOfLines.Count - 1) break;
-                    wordsInALine = _listOfLinesToCheck[(int)lineNumber].Split(new char[] { ' ' }).ToList();
                     originalWordsInALine = _listOfLines[(int)lineNumber].Split(new char[] { ' ' }).ToList();
                     tmp_index = dir == direction.left ?
-                        wordsInALine.Count - 1 :
+                        originalWordsInALine.Count - 1 :
                         0;
                     result = dir == direction.left ?
                         originalWordsInALine[tmp_index] + " " + result:
                         result + " " + originalWordsInALine[tmp_index];
                 }
-                
             }
             return result;
         }
